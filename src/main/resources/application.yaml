@@ -1,9 +1,12 @@
 server.port: 8081
-spring:
-  kafka:
-    consumer:
-      bootstrap-servers: localhost:9092
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      properties:
-        spring.json.value.default.type: com.oklimenko.kafka.consumer.demo.dto.Payment
+logging:
+  level:
+    com:
+      oklimenko: DEBUG
+
+kafka:
+  payment:
+    bootstrapAddress: localhost:9092
+    groupId: local-consumer
+    enabled: true
+    topic: test

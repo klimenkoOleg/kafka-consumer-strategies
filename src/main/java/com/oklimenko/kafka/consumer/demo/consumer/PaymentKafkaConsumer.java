@@ -8,11 +8,13 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 public class PaymentKafkaConsumer {
-    @KafkaListener(topics = "test5", groupId = "group_id_1"
-//            ,containerFactory = "paymentKafkaListenerContainerFactory"
+    @KafkaListener(topics = "#{'${kafka.payment.topic}'.split(',')}",
+            containerFactory = "paymentKafkaListenerContainerFactory"
     )
     public void processPayment(Payment payment) {
+//        System.out.println();
         log.info("Payment processed: {}", payment );
+//        System.out.println("Payment p rocessed: " + payment );
     }
 
 }
