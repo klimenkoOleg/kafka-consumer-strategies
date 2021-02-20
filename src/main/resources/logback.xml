@@ -9,8 +9,9 @@
     </appender>
 
     <logger name="com.oklimenko" level="TRACE" />
+    <logger name="com.oklimenko" level="TRACE" />
 
-    <root level="ERROR">
+    <root level="DEBUG">
         <appender-ref ref="STDOUT" />
     </root>
 </configuration>

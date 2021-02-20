@@ -37,7 +37,7 @@ public class KafkaErrorHandler implements ContainerAwareErrorHandler {
                         topic, offset, partition, thrownException);
             }
         } else {
-            log.debug("Consumer exception - cause: {}", thrownException.getMessage());
+            log.error("Consumer exception - cause: {}", thrownException.getMessage());
         }
 
     }

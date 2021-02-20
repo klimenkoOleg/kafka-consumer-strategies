@@ -3,6 +3,17 @@ logging:
   level:
     com:
       oklimenko: DEBUG
+    org:
+      springframework:
+        kafka:
+          listener:
+            KafkaMessageListenerContainer: ERROR
+      apache:
+        kafka:
+          clients:
+            FetchSessionHandler: INFO
+            consumer:
+              internals: INFO
 
 kafka:
   payment:
@@ -10,3 +21,21 @@ kafka:
     groupId: local-consumer
     enabled: true
     topic: test
+
+#spring:
+#  kafka:
+#    producer:
+#      bootstrap-servers: localhost:9092
+#      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+#      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+#      properties:
+#        spring.json.value.default.type: com.oklimenko.kafka.consumer.demo.dto.Payment
+
+#spring:
+#  kafka:
+#    consumer:
+#      bootstrap-servers: localhost:9092
+#      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+#      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+#      properties:
+#        spring.json.value.default.type: com.oklimenko.kafka.consumer.demo.dto.Payment

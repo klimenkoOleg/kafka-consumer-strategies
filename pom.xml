@@ -18,18 +18,10 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <org.mapstruct.version>1.4.1.Final</org.mapstruct.version>
-<!--        <kafka.version>2.5.8.RELEASE</kafka.version>-->
     </properties>
 
     <dependencyManagement>
         <dependencies>
-            <!--<dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-dependencies</artifactId>
-&lt;!&ndash;                <version>${spring-cloud-dependencies.version}</version>&ndash;&gt;
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>-->
             <dependency>
                 <groupId>ru.filit.mvideo.mb2c</groupId>
                 <artifactId>mb2c-lib-security-starter</artifactId>
@@ -53,6 +45,10 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
         </dependency>
         <!-- Other tools-->
         <dependency>
