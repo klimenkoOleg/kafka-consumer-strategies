@@ -16,6 +16,8 @@ import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
+import org.springframework.kafka.listener.SeekToCurrentErrorHandler;
 import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.retry.RetryContext;
@@ -23,6 +25,7 @@ import org.springframework.retry.annotation.EnableRetry;
 import org.springframework.retry.backoff.FixedBackOffPolicy;
 import org.springframework.retry.policy.SimpleRetryPolicy;
 import org.springframework.retry.support.RetryTemplate;
+import org.springframework.util.backoff.FixedBackOff;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -79,7 +82,12 @@ public class KafkaConsumerConfig {
         factory.setConsumerFactory(consumerFactory());
         factory.setRetryTemplate(kafkaRetry());
         factory.setRecoveryCallback(this::retryOption1);
-        factory.setErrorHandler(new KafkaErrorHandler());
+
+        factory.setErrorHandler(new SeekToCurrentErrorHandler(
+                new DeadLetterPublishingRecoverer(kafkaTemplate),
+                // new ExponentialBackOff(100, 1.3D)
+                new FixedBackOff(3000, 3)));
+
         return factory;
     }
 
