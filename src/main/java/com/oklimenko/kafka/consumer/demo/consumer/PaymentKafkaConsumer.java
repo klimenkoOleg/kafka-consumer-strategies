@@ -15,11 +15,11 @@ import java.math.BigDecimal;
 @RequiredArgsConstructor
 public class PaymentKafkaConsumer {
 
-    @KafkaListener(topics = "#{'${kafka.payment.topic}'.split(',')}",
+    @KafkaListener(topics = "#{'${kafka.payment.topics.input}'.split(',')}",
             containerFactory = "paymentKafkaListenerContainerFactory")
     public void processPayment(Payment payment,
                                @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
-                               @Header(KafkaHeaders.MESSAGE_KEY) String msgKey) {
+                               @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String msgKey) {
         log.debug(">>> Payment processed: {}", payment);
         if (BigDecimal.ZERO.compareTo(payment.getAmount()) > 0) {
             log.error("Amount can't be negative, found in Payment");

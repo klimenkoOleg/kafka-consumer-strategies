@@ -1,7 +1,5 @@
 package com.oklimenko.kafka.consumer.demo.config;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oklimenko.kafka.consumer.demo.config.kafkaerror.KafkaErrorHandler;
 import com.oklimenko.kafka.consumer.demo.dto.Payment;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,8 +28,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.springframework.kafka.listener.adapter.RetryingMessageListenerAdapter.CONTEXT_RECORD;
-
 @Slf4j
 @EnableRetry //
 @EnableKafka
@@ -39,11 +36,8 @@ import static org.springframework.kafka.listener.adapter.RetryingMessageListener
 @RequiredArgsConstructor
 public class KafkaConsumerConfig {
 
-    public static final String RETRY = "_test-consumer-group_RETRY";
-
     private final AppPropertiesConfig appPropertiesConfig;
     private final KafkaTemplate<String, Payment> kafkaTemplate;
-    private final ObjectMapper objectMapper;
 
     /**
      *  Kafka consumer factory setup - standard factory.
@@ -54,7 +48,7 @@ public class KafkaConsumerConfig {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, appPropertiesConfig.getKafkaServer());
         props.put(ConsumerConfig.GROUP_ID_CONFIG, appPropertiesConfig.getKafkaConsumerGroupId());
-        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
+        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
 
         // key.deserializer
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
@@ -83,37 +77,32 @@ public class KafkaConsumerConfig {
         ConcurrentKafkaListenerContainerFactory<String, Payment> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
-//        factory.setErrorHandler(new KafkaErrorHandler());
         factory.setRetryTemplate(kafkaRetry());
-        factory.setRecoveryCallback(this::retryOption1); //
-        // option 3, minuses:
-        // 1) executes retry logic on the main topic
-        // 2) you are not free to giving a name for error topic
-        // 3) blocks the main consumer while its waiting for the retry -> slow down
-        // Option 4
-        // factory.setErrorHandler(new SeekToCurrentErrorHandler(
-        // new DeadLetterPublishingRecoverer(kafkaTemplate), new FixedBackOff(100, 3);
-        // Option 5
-        // factory.setErrorHandler(new SeekToCurrentErrorHandler(
-        // new DeadLetterPublishingRecoverer(kafkaTemplate),
-        // new ExponentialBackOff(100, 1.3D)setRetryTemplate));
+        factory.setRecoveryCallback(this::retryOption1);
+        factory.setErrorHandler(new KafkaErrorHandler());
         return factory;
     }
 
     private Object retryOption1(RetryContext retryContext) {
-        ConsumerRecord consumerRecord = (ConsumerRecord) retryContext.getAttribute("record");
-        log.info("Recovery is called for message {} ", consumerRecord.value());
+        ConsumerRecord<String, Payment> consumerRecord = (ConsumerRecord) retryContext.getAttribute("record");
+        Payment value = consumerRecord.value();
+        log.info("Recovery is called for message {} ", value);
+        if (Boolean.TRUE.equals(retryContext.getAttribute(RetryContext.EXHAUSTED))) {
+            log.info("MOVED TO ERROR DLQ");
+            value.setErrorMessage(getThrowableSafely(retryContext));
+            kafkaTemplate.send( appPropertiesConfig.getKafkaTopicAccessoryDlq(),
+                    consumerRecord.key(),
+                    consumerRecord.value() );
+        }
         return Optional.empty();
     }
 
-    private Object retryOption2(RetryContext retryContext) throws JsonProcessingException {
-        ConsumerRecord consumerRecord = (ConsumerRecord) retryContext.getAttribute(CONTEXT_RECORD);
-        String errorTopic = consumerRecord.topic().replace("_RETRY", "_ERROR");
-
-        log.info("Sending to the error topic");
-        kafkaTemplate.send(errorTopic, consumerRecord.key().toString(),
-                objectMapper.readValue(consumerRecord.value().toString(), Payment.class));
-        return Optional.empty();
+    private String getThrowableSafely(RetryContext retryContext) {
+        Throwable lastThrowable = retryContext.getLastThrowable();
+        if (lastThrowable == null) {
+            return Strings.EMPTY;
+        }
+        return lastThrowable.getMessage();
     }
 
     private RetryTemplate kafkaRetry() {

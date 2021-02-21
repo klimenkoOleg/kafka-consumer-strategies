@@ -18,6 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class KafkaErrorHandler implements ContainerAwareErrorHandler {
 
     public void handle(Exception thrownException, List<ConsumerRecord<?, ?>> records, Consumer<?, ?> consumer, MessageListenerContainer container) {
+        log.error("Error processing STARTED");
         this.doSeeks(records, consumer);
         if (!records.isEmpty()) {
             ConsumerRecord<?, ?> record = records.get(0);

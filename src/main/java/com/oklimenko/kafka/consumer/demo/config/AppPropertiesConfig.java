@@ -15,6 +15,9 @@ public class AppPropertiesConfig {
     @Value("${kafka.payment.groupId}")
     private String kafkaConsumerGroupId;
 
-    @Value("${kafka.payment.topic}")
+    @Value("${kafka.payment.topics.input}")
     private String kafkaTopicAccessory;
+
+    @Value("${kafka.payment.topics.dlq}")
+    private String kafkaTopicAccessoryDlq;
 }
