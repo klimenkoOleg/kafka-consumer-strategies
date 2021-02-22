@@ -3,6 +3,7 @@ package com.oklimenko.kafka.consumer.demo.consumer;
 import com.oklimenko.kafka.consumer.demo.config.AppPropertiesConfig;
 import com.oklimenko.kafka.consumer.demo.dto.Payment;
 import com.oklimenko.kafka.consumer.demo.exception.AbsUnavailableException;
+import com.oklimenko.kafka.consumer.demo.exception.ConsumerMisconfigurationException;
 import com.oklimenko.kafka.consumer.demo.service.AbsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +19,6 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -47,36 +47,15 @@ public class PaymentKafkaConsumer {
             absService.transferPayment(payment);
             ack.acknowledge();
         } catch (Exception e) {
-            String destinationTopic;
-            if (isFatal(e)) {
-                destinationTopic = topic + "._DLQ";
-            } else {
-                destinationTopic = getRetryDestinationTopic(topic, groupId);
-            }
-            log.error("Sending due to exception to topic={}, messageKey={}", destinationTopic, msgKey);
-            payment.setErrorMessage(e.getMessage());
-            ProducerRecord<String, Payment> record = new ProducerRecord<>(destinationTopic, msgKey, payment);
-            record.headers().add("retry", "1".getBytes(StandardCharsets.UTF_8));
-            kafkaTemplate.send(record);
+            log.error("Exception for messageKey={}", msgKey);
+            String destinationTopic = calcDestinaitonTopic(topic, groupId, e);
+            sendToRetry(payment, msgKey, e, destinationTopic, "1");
             ack.acknowledge();
+            log.debug("Exception processing ack for msgKey={}", msgKey);
         }
         log.debug("<<< Payment processed: {}", payment);
     }
 
-    private String getRetryDestinationTopic(String topic, String groupId) {
-        return "test-retry";
-//        return topic + "-" + groupId + "_RETRY";
-    }
-
-    private boolean isFatal(Exception e) {
-        return !(e instanceof AbsUnavailableException);
-    }
-
-    // sleep containerr for rN sec
-    // get the n sec from header
-    // increase header n sec
-    // num tryes - send to header
-    //
     @KafkaListener(topics = "test-retry",
             containerFactory = "paymentKafkaListenerContainerFactory", id = "retryListener")
     public void processPaymentRetry(@Payload Payment payment,
@@ -87,58 +66,67 @@ public class PaymentKafkaConsumer {
                                     Acknowledgment ack) {
         log.debug(">>> Payment processed: {}", payment);
         Integer retry = Integer.valueOf(new String(retryBytes, StandardCharsets.UTF_8));
+        Long delayMillis = appPropertiesConfig.getRetries().get(retry);
+        if (delayMillis == null) {
+            throw new ConsumerMisconfigurationException("delayMillis is empty for retry # = " + retry);
+        }
         try {
-            MessageListenerContainer listenerContainer = kafkaListenerEndpointRegistry.getListenerContainer("retryListener");
-            listenerContainer.stop();
-            Long delayMillis = appPropertiesConfig.getRetries().get(retry);
-            if (delayMillis == null) {
-                delayMillis = 1000L;
-            }
-            Instant retryAt = Instant.now().plus(delayMillis, ChronoUnit.MILLIS);
-            taskScheduler.schedule(listenerContainer::start, retryAt);
-
+            sleepConsumer(delayMillis);
             absService.transferPayment(payment);
             ack.acknowledge();
         } catch (Exception e) {
-            // todo: logic move to DLQ if appPropertiesConfig.getKafkaPaymentRetries() is the last one
+            log.error("Exception for messageKey={}", msgKey);
             Integer nextRetry = retry + 1;
-            Long delayMillis = appPropertiesConfig.getRetries().get(nextRetry);
+            Long nextDelayMillis = appPropertiesConfig.getRetries().get(nextRetry);
 
-            String destinationTopic;
-            if (delayMillis == null || isFatal(e)) {
-                destinationTopic = topic + "._DLQ";
-            } else {
-                destinationTopic = getRetryDestinationTopic(topic, groupId);
-            }
-            log.error("Sending due to exception to topic={}, messageKey={}", destinationTopic, msgKey);
-//            payment.setErrorMessage(e.getMessage());
-//            kafkaTemplate.send(destinationTopic, msgKey, payment);
-            payment.setErrorMessage(e.getMessage());
-            ProducerRecord<String, Payment> record = new ProducerRecord<>(destinationTopic, msgKey, payment);
-            record.headers().add("retry", String.valueOf(nextRetry).getBytes(StandardCharsets.UTF_8));
-            kafkaTemplate.send(record);
+            String destinationTopic = calcDestinaitonTopic(topic, groupId, e, nextDelayMillis);
+            sendToRetry(payment, msgKey, e, destinationTopic, String.valueOf(nextRetry));
             ack.acknowledge();
+            log.debug("Exception processing ack for msgKey={}", msgKey);
         }
         log.debug("<<< Payment processed: {}", payment);
     }
 
-    /*@KafkaListener(topics = "test-retry",
-            containerFactory = "paymentKafkaListenerContainerFactory")
-    public void processPaymentRetry15mins(Payment payment,
-                                         @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
-                                         @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String msgKey,
-                                         @Header(KafkaHeaders.GROUP_ID) String groupId) {
-        log.debug(">>> Payment processed: {}", payment);
-        try {
-            absService.transferPayment(payment);
-        } catch (Exception e) {
-            String destinationTopic = topic + "._DLQ";
-            log.error("Sending due to exception to topic={}, messageKey={}", destinationTopic, msgKey);
-            payment.setErrorMessage(e.getMessage());
-            kafkaTemplate.send(destinationTopic, msgKey, payment);
-        }
-        log.debug("<<< Payment processed: {}", payment);
-    }*/
+    private void sendToRetry(@Payload Payment payment, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String msgKey, Exception e, String destinationTopic, String s) {
+        payment.setErrorMessage(e.getMessage());
+        ProducerRecord<String, Payment> record = new ProducerRecord<>(destinationTopic, msgKey, payment);
+        record.headers().add("retry", s.getBytes(StandardCharsets.UTF_8));
+        kafkaTemplate.send(record);
+    }
 
+    private void sleepConsumer(Long delayMillis) {
+        MessageListenerContainer listenerContainer = kafkaListenerEndpointRegistry.getListenerContainer("retryListener");
+        listenerContainer.stop();
+        Instant retryAt = Instant.now().plus(delayMillis, ChronoUnit.MILLIS);
+        taskScheduler.schedule(listenerContainer::start, retryAt);
+    }
+
+    private String calcDestinaitonTopic(String topic, String groupId, Exception e) {
+        return calcTopicInternal(topic, groupId, e, false);
+    }
+
+    private String calcDestinaitonTopic(String topic, String groupId, Exception e, Long nextDelayMillis) {
+        return calcTopicInternal(topic, groupId, e, nextDelayMillis == null);
+    }
+
+    private String calcTopicInternal(String topic, String groupId, Exception e, boolean toDlq) {
+        String destinationTopic;
+        if (toDlq || isFatal(e)) {
+            destinationTopic = topic + ".DLQ";
+        } else {
+            destinationTopic = getRetryDestinationTopic(topic, groupId);
+        }
+        log.debug("Sending due to exception to topic={}", destinationTopic);
+        return destinationTopic;
+    }
+
+    private boolean isFatal(Exception e) {
+        return !(e instanceof AbsUnavailableException);
+    }
+
+    private String getRetryDestinationTopic(String topic, String groupId) {
+        return "test-retry";
+        //return topic + "-" + groupId + "_RETRY";
+    }
 
 }

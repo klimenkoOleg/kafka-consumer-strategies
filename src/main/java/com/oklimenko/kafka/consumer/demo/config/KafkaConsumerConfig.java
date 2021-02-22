@@ -73,49 +73,6 @@ public class KafkaConsumerConfig {
         factory.setConsumerFactory(consumerFactory());
         factory.setErrorHandler(new KafkaErrorHandler());
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
-
-//        factory.setRetryTemplate(kafkaRetry());
-//        factory.setRecoveryCallback(this::retryOption1);
-
-
-        /*factory.setErrorHandler(new SeekToCurrentErrorHandler(
-                new DeadLetterPublishingRecoverer(kafkaTemplate),
-                // new ExponentialBackOff(100, 1.3D)
-                new FixedBackOff(3000, 3)));*/
-
         return factory;
     }
-
-    /*private Object retryOption1(RetryContext retryContext) {
-        ConsumerRecord<String, Payment> consumerRecord = (ConsumerRecord) retryContext.getAttribute("record");
-        Payment value = consumerRecord.value();
-        log.info("Recovery is called for message {} ", value);
-        if (Boolean.TRUE.equals(retryContext.getAttribute(RetryContext.EXHAUSTED))) {
-            log.info("MOVED TO ERROR DLQ");
-            value.setErrorMessage(getThrowableSafely(retryContext));
-            kafkaTemplate.send( appPropertiesConfig.getKafkaTopicAccessoryDlq(),
-                    consumerRecord.key(),
-                    consumerRecord.value() );
-        }
-        return Optional.empty();
-    }*/
-
-    /*private String getThrowableSafely(RetryContext retryContext) {
-        Throwable lastThrowable = retryContext.getLastThrowable();
-        if (lastThrowable == null) {
-            return Strings.EMPTY;
-        }
-        return lastThrowable.getMessage();
-    }*/
-
-    /*private RetryTemplate kafkaRetry() {
-        RetryTemplate retryTemplate = new RetryTemplate();
-        FixedBackOffPolicy fixedBackOffPolicy = new FixedBackOffPolicy();  // other policies are not better
-        fixedBackOffPolicy.setBackOffPeriod(3 * 1000L);
-        retryTemplate.setBackOffPolicy(fixedBackOffPolicy);
-        SimpleRetryPolicy retryPolicy = new SimpleRetryPolicy(); // other policies are not better
-        retryPolicy.setMaxAttempts(3);
-        retryTemplate.setRetryPolicy(retryPolicy);
-        return retryTemplate;
-    }*/
 }
