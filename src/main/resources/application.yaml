@@ -23,6 +23,10 @@ kafka:
     topics:
       input: test
       dlq: test-dlq
+    retries:
+      1: 1000
+      2: 3000
+      3: 5000
 
 spring:
   kafka:

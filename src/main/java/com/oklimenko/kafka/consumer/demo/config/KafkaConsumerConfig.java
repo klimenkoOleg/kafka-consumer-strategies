@@ -5,9 +5,7 @@ import com.oklimenko.kafka.consumer.demo.dto.Payment;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.apache.logging.log4j.util.Strings;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,20 +14,13 @@ import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
-import org.springframework.kafka.listener.SeekToCurrentErrorHandler;
+import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
-import org.springframework.retry.RetryContext;
 import org.springframework.retry.annotation.EnableRetry;
-import org.springframework.retry.backoff.FixedBackOffPolicy;
-import org.springframework.retry.policy.SimpleRetryPolicy;
-import org.springframework.retry.support.RetryTemplate;
-import org.springframework.util.backoff.FixedBackOff;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 @Slf4j
 @EnableRetry //
@@ -75,23 +66,27 @@ public class KafkaConsumerConfig {
      */
     @Bean("paymentKafkaListenerContainerFactory")
     public ConcurrentKafkaListenerContainerFactory<String, Payment>
-    promoMaterialsKafkaListenerContainerFactory() {
+        promoMaterialsKafkaListenerContainerFactory() {
 
         ConcurrentKafkaListenerContainerFactory<String, Payment> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
-        factory.setRetryTemplate(kafkaRetry());
-        factory.setRecoveryCallback(this::retryOption1);
+        factory.setErrorHandler(new KafkaErrorHandler());
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
 
-        factory.setErrorHandler(new SeekToCurrentErrorHandler(
+//        factory.setRetryTemplate(kafkaRetry());
+//        factory.setRecoveryCallback(this::retryOption1);
+
+
+        /*factory.setErrorHandler(new SeekToCurrentErrorHandler(
                 new DeadLetterPublishingRecoverer(kafkaTemplate),
                 // new ExponentialBackOff(100, 1.3D)
-                new FixedBackOff(3000, 3)));
+                new FixedBackOff(3000, 3)));*/
 
         return factory;
     }
 
-    private Object retryOption1(RetryContext retryContext) {
+    /*private Object retryOption1(RetryContext retryContext) {
         ConsumerRecord<String, Payment> consumerRecord = (ConsumerRecord) retryContext.getAttribute("record");
         Payment value = consumerRecord.value();
         log.info("Recovery is called for message {} ", value);
@@ -103,17 +98,17 @@ public class KafkaConsumerConfig {
                     consumerRecord.value() );
         }
         return Optional.empty();
-    }
+    }*/
 
-    private String getThrowableSafely(RetryContext retryContext) {
+    /*private String getThrowableSafely(RetryContext retryContext) {
         Throwable lastThrowable = retryContext.getLastThrowable();
         if (lastThrowable == null) {
             return Strings.EMPTY;
         }
         return lastThrowable.getMessage();
-    }
+    }*/
 
-    private RetryTemplate kafkaRetry() {
+    /*private RetryTemplate kafkaRetry() {
         RetryTemplate retryTemplate = new RetryTemplate();
         FixedBackOffPolicy fixedBackOffPolicy = new FixedBackOffPolicy();  // other policies are not better
         fixedBackOffPolicy.setBackOffPeriod(3 * 1000L);
@@ -122,5 +117,5 @@ public class KafkaConsumerConfig {
         retryPolicy.setMaxAttempts(3);
         retryTemplate.setRetryPolicy(retryPolicy);
         return retryTemplate;
-    }
+    }*/
 }
