@@ -45,14 +45,12 @@ public class PaymentKafkaConsumer {
         log.debug(">>> Payment processed: {}", payment);
         try {
             absService.transferPayment(payment);
-            ack.acknowledge();
         } catch (Exception e) {
             log.error("Exception for messageKey={}", msgKey);
             String destinationTopic = calcDestinaitonTopic(topic, groupId, e);
             sendToRetry(payment, msgKey, e, destinationTopic, "1");
-            ack.acknowledge();
-            log.debug("Exception processing ack for msgKey={}", msgKey);
         }
+        ack.acknowledge();
         log.debug("<<< Payment processed: {}", payment);
     }
 
@@ -73,7 +71,6 @@ public class PaymentKafkaConsumer {
         try {
             sleepConsumer(delayMillis);
             absService.transferPayment(payment);
-            ack.acknowledge();
         } catch (Exception e) {
             log.error("Exception for messageKey={}", msgKey);
             Integer nextRetry = retry + 1;
@@ -81,9 +78,8 @@ public class PaymentKafkaConsumer {
 
             String destinationTopic = calcDestinaitonTopic(topic, groupId, e, nextDelayMillis);
             sendToRetry(payment, msgKey, e, destinationTopic, String.valueOf(nextRetry));
-            ack.acknowledge();
-            log.debug("Exception processing ack for msgKey={}", msgKey);
         }
+        ack.acknowledge();
         log.debug("<<< Payment processed: {}", payment);
     }
 
