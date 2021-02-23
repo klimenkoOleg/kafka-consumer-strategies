@@ -45,7 +45,7 @@ public class KafkaConsumerConfig {
         props.put(ErrorHandlingDeserializer.KEY_DESERIALIZER_CLASS, JsonDeserializer.class);
 
         ErrorHandlingDeserializer<Payment> errorHandlingDeserializer
-                = new ErrorHandlingDeserializer<>(new JsonDeserializer<>(Payment.class));
+                = new ErrorHandlingDeserializer<>();
 
         return new DefaultKafkaConsumerFactory<>(
                 props,
