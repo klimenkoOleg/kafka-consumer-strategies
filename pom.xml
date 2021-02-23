@@ -18,35 +18,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <org.mapstruct.version>1.4.1.Final</org.mapstruct.version>
-<!--        <kafka.version>2.5.8.RELEASE</kafka.version>-->
     </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <!--<dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-dependencies</artifactId>
-&lt;!&ndash;                <version>${spring-cloud-dependencies.version}</version>&ndash;&gt;
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>-->
-            <dependency>
-                <groupId>ru.filit.mvideo.mb2c</groupId>
-                <artifactId>mb2c-lib-security-starter</artifactId>
-                <version>${mb2c-lib-security.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>ru.filit.mvideo.mb2c</groupId>
-                <artifactId>mb2c-lib-shared-starter</artifactId>
-                <version>${mb2c-lib-shared.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>ru.filit.mvideo.mb2c</groupId>
-                <artifactId>mb2c-sp-starter</artifactId>
-                <version>${mb2c-lib-sp.version}</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
     <dependencies>
         <!-- Spring Boot-->
@@ -85,7 +57,7 @@
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
-        <!--Needed to recaive Optional-->
+        <!--Needed to receive Optional-->
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jdk8</artifactId>
