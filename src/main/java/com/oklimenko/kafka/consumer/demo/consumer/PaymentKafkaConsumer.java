@@ -12,9 +12,7 @@ public class PaymentKafkaConsumer {
             containerFactory = "paymentKafkaListenerContainerFactory"
     )
     public void processPayment(Payment payment) {
-//        System.out.println();
         log.info("Payment processed: {}", payment );
-//        System.out.println("Payment p rocessed: " + payment );
     }
 
 }

@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Slf4j
 public class KafkaErrorHandler implements ContainerAwareErrorHandler {
 
+    @Override
     public void handle(Exception thrownException, List<ConsumerRecord<?, ?>> records, Consumer<?, ?> consumer, MessageListenerContainer container) {
         this.doSeeks(records, consumer);
         if (!records.isEmpty()) {
@@ -64,7 +65,6 @@ public class KafkaErrorHandler implements ContainerAwareErrorHandler {
                     return record.offset();
                 });
             }
-
             first.set(false);
         });
         partitions.forEach(consumer::seek);
