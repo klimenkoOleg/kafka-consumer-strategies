@@ -22,7 +22,7 @@ kafka:
     enabled: true
     topics:
       input: test
-      dlq: test-dlq
+      dlq: test.dlq
 
 spring:
   kafka:
