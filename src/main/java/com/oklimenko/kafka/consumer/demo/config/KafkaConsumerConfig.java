@@ -83,10 +83,9 @@ public class KafkaConsumerConfig {
         return factory;
     }
 
-    private Object retryOption1(RetryContext retryContext) {
-        ConsumerRecord<String, Payment> consumerRecord = (ConsumerRecord) retryContext.getAttribute("record");
-        Payment value = consumerRecord.value();
-        log.info("Recovery is called for message {} ", value);
+
+
+    private void doOnLastRetry(RetryContext retryContext, ConsumerRecord<String, Payment> consumerRecord, Payment value) {
         if (Boolean.TRUE.equals(retryContext.getAttribute(RetryContext.EXHAUSTED))) {
             log.info("MOVED TO ERROR DLQ");
             value.setErrorMessage(getThrowableSafely(retryContext));
@@ -94,7 +93,6 @@ public class KafkaConsumerConfig {
                     consumerRecord.key(),
                     consumerRecord.value() );
         }
-        return Optional.empty();
     }
 
     private String getThrowableSafely(RetryContext retryContext) {
@@ -105,14 +103,4 @@ public class KafkaConsumerConfig {
         return lastThrowable.getMessage();
     }
 
-    private RetryTemplate kafkaRetry() {
-        RetryTemplate retryTemplate = new RetryTemplate();
-        FixedBackOffPolicy fixedBackOffPolicy = new FixedBackOffPolicy();  // other policies are not better
-        fixedBackOffPolicy.setBackOffPeriod(3 * 1000L);
-        retryTemplate.setBackOffPolicy(fixedBackOffPolicy);
-        SimpleRetryPolicy retryPolicy = new SimpleRetryPolicy(); // other policies are not better
-        retryPolicy.setMaxAttempts(3);
-        retryTemplate.setRetryPolicy(retryPolicy);
-        return retryTemplate;
-    }
 }
