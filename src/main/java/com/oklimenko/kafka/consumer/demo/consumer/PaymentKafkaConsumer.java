@@ -20,7 +20,7 @@ public class PaymentKafkaConsumer {
     public void processPayment(Payment payment,
                                @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
                                @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String msgKey) {
-        log.debug(">>> Payment processed: {}", payment);
+        log.debug(">>> Payment processing started: {}", payment);
         if (BigDecimal.ZERO.compareTo(payment.getAmount()) > 0) {
             log.error("Amount can't be negative, found in Payment");
             throw new RuntimeException("Amount can't be negative, found in Payment=" + payment);
