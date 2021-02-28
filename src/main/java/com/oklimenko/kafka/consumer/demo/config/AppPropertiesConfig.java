@@ -29,6 +29,8 @@ public class AppPropertiesConfig {
     @Value("${kafka.payment.topics.dlq}")
     private String kafkaTopicAccessoryDlq;
 
-//    @Value("#{'${kafka.payment.retries}'}")
+    @Value("${kafka.payment.topics.retry}")
+    private String kafkaTopicAccessoryRetry;
+
     private Map<Integer, Long> retries;
 }

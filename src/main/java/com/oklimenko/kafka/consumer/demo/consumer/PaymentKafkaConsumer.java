@@ -42,19 +42,19 @@ public class PaymentKafkaConsumer {
                                @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String msgKey,
                                @Header(KafkaHeaders.GROUP_ID) String groupId,
                                Acknowledgment ack) {
-        log.debug(">>> Payment processed: {}", payment);
+        log.debug(">>> Payment processing started: {}", payment);
         try {
             absService.transferPayment(payment);
         } catch (Exception e) {
             log.error("Exception for messageKey={}", msgKey);
-            String destinationTopic = calcDestinaitonTopic(topic, groupId, e);
+            String destinationTopic = calcDestinationTopic(topic, groupId, e);
             sendToRetry(payment, msgKey, e, destinationTopic, "1");
         }
         ack.acknowledge();
         log.debug("<<< Payment processed: {}", payment);
     }
 
-    @KafkaListener(topics = "test-retry",
+    @KafkaListener(topics = "test.retry",
             containerFactory = "paymentKafkaListenerContainerFactory", id = "retryListener")
     public void processPaymentRetry(@Payload Payment payment,
                                     @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
@@ -62,9 +62,11 @@ public class PaymentKafkaConsumer {
                                     @Header(KafkaHeaders.GROUP_ID) String groupId,
                                     @Header("retry") byte[] retryBytes,
                                     Acknowledgment ack) {
-        log.debug(">>> Payment processed: {}", payment);
+        log.debug(">>> Retry Payment processed: {}", payment);
         Integer retry = Integer.valueOf(new String(retryBytes, StandardCharsets.UTF_8));
         Long delayMillis = appPropertiesConfig.getRetries().get(retry);
+        log.debug(">>> Retry # {}, delayMillis={}", retry, delayMillis);
+
         if (delayMillis == null) {
             throw new ConsumerMisconfigurationException("delayMillis is empty for retry # = " + retry);
         }
@@ -76,11 +78,11 @@ public class PaymentKafkaConsumer {
             Integer nextRetry = retry + 1;
             Long nextDelayMillis = appPropertiesConfig.getRetries().get(nextRetry);
 
-            String destinationTopic = calcDestinaitonTopic(topic, groupId, e, nextDelayMillis);
+            String destinationTopic = calcDestinationTopic(topic, groupId, e, nextDelayMillis);
             sendToRetry(payment, msgKey, e, destinationTopic, String.valueOf(nextRetry));
         }
         ack.acknowledge();
-        log.debug("<<< Payment processed: {}", payment);
+        log.debug("<<< Retry # {}, idempotencyKey={}", retry, payment.getIdempotencyKey());
     }
 
     private void sendToRetry(@Payload Payment payment, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String msgKey, Exception e, String destinationTopic, String s) {
@@ -97,32 +99,28 @@ public class PaymentKafkaConsumer {
         taskScheduler.schedule(listenerContainer::start, retryAt);
     }
 
-    private String calcDestinaitonTopic(String topic, String groupId, Exception e) {
+    private String calcDestinationTopic(String topic, String groupId, Exception e) {
         return calcTopicInternal(topic, groupId, e, false);
     }
 
-    private String calcDestinaitonTopic(String topic, String groupId, Exception e, Long nextDelayMillis) {
+    private String calcDestinationTopic(String topic, String groupId, Exception e, Long nextDelayMillis) {
         return calcTopicInternal(topic, groupId, e, nextDelayMillis == null);
     }
 
     private String calcTopicInternal(String topic, String groupId, Exception e, boolean toDlq) {
         String destinationTopic;
         if (toDlq || isFatal(e)) {
-            destinationTopic = topic + ".DLQ";
+            destinationTopic = appPropertiesConfig.getKafkaTopicAccessoryDlq();
+            log.error("DLQ sending due to exception to topic={}", destinationTopic);
         } else {
-            destinationTopic = getRetryDestinationTopic(topic, groupId);
+            destinationTopic = appPropertiesConfig.getKafkaTopicAccessoryRetry();
+            log.debug("RETRY sending due to exception to topic={}", destinationTopic);
         }
-        log.debug("Sending due to exception to topic={}", destinationTopic);
         return destinationTopic;
     }
 
     private boolean isFatal(Exception e) {
         return !(e instanceof AbsUnavailableException);
-    }
-
-    private String getRetryDestinationTopic(String topic, String groupId) {
-        return "test-retry";
-        //return topic + "-" + groupId + "_RETRY";
     }
 
 }

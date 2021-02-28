@@ -22,11 +22,12 @@ kafka:
     enabled: true
     topics:
       input: test
-      dlq: test-dlq
+      dlq: test.dlq
+      retry: test.retry
     retries:
-      1: 1000
-      2: 3000
-      3: 5000
+      1: 500
+      2: 1000
+      3: 3000
 
 spring:
   kafka:
