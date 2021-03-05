@@ -44,13 +44,10 @@ public class KafkaConsumerConfig {
         // spring.deserializer.key.delegate.class
         props.put(ErrorHandlingDeserializer.KEY_DESERIALIZER_CLASS, JsonDeserializer.class);
 
-        ErrorHandlingDeserializer<Payment> errorHandlingDeserializer
-                = new ErrorHandlingDeserializer<>();
-
         return new DefaultKafkaConsumerFactory<>(
                 props,
                 new StringDeserializer(),
-                errorHandlingDeserializer);
+                new JsonDeserializer<>(Payment.class));
     }
 
     /**
