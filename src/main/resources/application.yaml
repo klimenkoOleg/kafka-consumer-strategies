@@ -1,4 +1,19 @@
 server.port: 8081
+logging:
+  level:
+    com:
+      oklimenko: DEBUG
+    org:
+      springframework:
+        kafka:
+          listener:
+            KafkaMessageListenerContainer: ERROR
+      apache:
+        kafka:
+          clients:
+            FetchSessionHandler: INFO
+            consumer:
+              internals: INFO
 spring:
   kafka:
     consumer:
