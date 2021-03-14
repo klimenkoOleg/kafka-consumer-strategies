@@ -66,10 +66,6 @@ public class PaymentKafkaConsumer {
         Integer retry = Integer.valueOf(new String(retryBytes, StandardCharsets.UTF_8));
         Long delayMillis = appPropertiesConfig.getRetries().get(retry);
         log.debug(">>> Retry # {}, delayMillis={}", retry, delayMillis);
-
-        if (delayMillis == null) {
-            throw new ConsumerMisconfigurationException("delayMillis is empty for retry # = " + retry);
-        }
         try {
             sleepConsumer(delayMillis);
             absService.transferPayment(payment);
