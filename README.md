@@ -1,5 +1,35 @@
 # kafka-consumer-strategies
 
+There are different Kafka consumer cases considered, each in different branch.
+
+1. Branch **case-1-simple-after**
+Fast and simple implementation of 
+![image](https://user-images.githubusercontent.com/37443840/113258476-a68e5580-92d4-11eb-982f-f300aeae7196.png)
+
+
+2. Branch **case-2-error-handler-after**
+Consumer configuration was moved from config to Java code, error handling was added for message formatting error.
+
+![image](https://user-images.githubusercontent.com/37443840/113259358-b490a600-92d5-11eb-8fb3-780510dabf7a.png)
+
+
+3. Branch **case-3-spring-retry-after**
+
+Retry operation has been implemented using built in Spring libraries.
+![image](https://user-images.githubusercontent.com/37443840/113260846-6b415600-92d7-11eb-99a0-b43ebb3187eb.png)
+
+
+4. Branch **case-4-spring-SeekToCurrentErrorHandler**
+
+
+
+
+5. 
+
+
+
+
+
 List of used sources:
 
 * https://stackoverflow.com/questions/57722688/is-there-a-way-to-get-the-last-message-from-kafka-topic
