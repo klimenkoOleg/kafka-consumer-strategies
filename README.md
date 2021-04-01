@@ -5,11 +5,21 @@
 Fast and simple implementation of 
 ![image](https://user-images.githubusercontent.com/37443840/113258476-a68e5580-92d4-11eb-982f-f300aeae7196.png)
 
+\
+\
+\
+
+
 
 # 2. Branch **case-2-error-handler-after**
 Consumer configuration was moved from config to Java code, error handling was added for message formatting error.
 
 ![image](https://user-images.githubusercontent.com/37443840/113259358-b490a600-92d5-11eb-8fb3-780510dabf7a.png)
+
+
+\
+\
+\
 
 
 # 3. Branch **case-3-spring-retry-after**
@@ -19,16 +29,30 @@ Retry operation has been implemented using built in Spring libraries.
 ![image](https://user-images.githubusercontent.com/37443840/113264631-dbea7180-92db-11eb-9d64-abd6d972736d.png)
 
 
+\
+\
+\
+
+
 # 4. Branch **case-4-spring-SeekToCurrentErrorHandler**
 
 Similar to Case 3 but used latest Spring Boot 2.3 class SeekToCurrentErrorHandler
 ![image](https://user-images.githubusercontent.com/37443840/113264705-eefd4180-92db-11eb-9320-463a07ee6f9f.png)
 
 
+\
+\
+\
+
 
 # 5. Branch **case-5-different-queues-with-delay-2**
 
 ![image](https://user-images.githubusercontent.com/37443840/113265892-510a7680-92dd-11eb-8062-c4a4b2dae677.png)
+
+
+\
+\
+\
 
 
 
