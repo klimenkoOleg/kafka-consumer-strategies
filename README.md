@@ -17,15 +17,19 @@ Consumer configuration was moved from config to Java code, error handling was ad
 
 Retry operation has been implemented using built in Spring libraries.
 ![image](https://user-images.githubusercontent.com/37443840/113260846-6b415600-92d7-11eb-99a0-b43ebb3187eb.png)
+![image](https://user-images.githubusercontent.com/37443840/113264631-dbea7180-92db-11eb-9d64-abd6d972736d.png)
 
 
 4. Branch **case-4-spring-SeekToCurrentErrorHandler**
 
+Similar to Case 3 but used latest Spring Boot 2.3 class SeekToCurrentErrorHandler
+![image](https://user-images.githubusercontent.com/37443840/113264705-eefd4180-92db-11eb-9320-463a07ee6f9f.png)
 
 
 
-5. 
+5. Branch **case-5-different-queues-with-delay-2**
 
+![image](https://user-images.githubusercontent.com/37443840/113265892-510a7680-92dd-11eb-8062-c4a4b2dae677.png)
 
 
 
