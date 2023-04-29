@@ -1,6 +1,7 @@
 
 **There are different Kafka consumer cases considered, each in different branch.**
 
+
 # 1. Branch **case-1-simple-after**
 Fast and simple implementation of 
 ![image](https://user-images.githubusercontent.com/37443840/113258476-a68e5580-92d4-11eb-982f-f300aeae7196.png)
